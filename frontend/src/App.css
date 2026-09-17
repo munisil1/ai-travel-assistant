@@ -132,6 +132,18 @@ h1 {
     box-shadow: 0 0 0 3px rgba(57, 130, 93, .14);
 }
 
+.preferences-panel {
+    display: grid;
+    gap: 18px;
+    margin: 14px 0 32px;
+}
+
+.preferences-panel__row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
 .destination-autocomplete {
     position: relative;
 }
@@ -232,12 +244,14 @@ h1 {
 }
 
 .choice-toggle label,
-.age-option {
+.age-option,
+.chip-option {
     cursor: pointer;
 }
 
 .choice-toggle input,
-.age-option input {
+.age-option input,
+.chip-option input {
     position: absolute;
     opacity: 0;
 }
@@ -261,7 +275,8 @@ h1 {
 }
 
 .choice-toggle input:focus-visible+span,
-.age-option input:focus-visible+span {
+.age-option input:focus-visible+span,
+.chip-option input:focus-visible+span {
     outline: 3px solid rgba(57, 130, 93, .28);
     outline-offset: 2px;
 }
@@ -279,13 +294,15 @@ h1 {
     font-size: .82rem;
 }
 
-.age-picker__options {
+.age-picker__options,
+.chip-picker {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
 }
 
-.age-option span {
+.age-option span,
+.chip-option span {
     display: block;
     padding: 8px 12px;
     border: 1px solid #d5e1d9;
@@ -297,10 +314,25 @@ h1 {
     transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
-.age-option input:checked+span {
+.age-option input:checked+span,
+.chip-option input:checked+span {
     border-color: #2b7550;
     background: #2b7550;
     color: #fff;
+}
+
+.interests-fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.interests-fieldset legend {
+    margin-bottom: 11px;
+    color: #30443b;
+    font-size: .82rem;
+    font-weight: 700;
 }
 
 .submit-button {
@@ -381,7 +413,8 @@ h1 {
         border-radius: 15px;
     }
 
-    .form-grid {
+    .form-grid,
+    .preferences-panel__row {
         grid-template-columns: 1fr;
     }
 
