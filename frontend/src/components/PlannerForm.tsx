@@ -3,6 +3,7 @@ import {
   DestinationAutocomplete,
   type SelectedDestination,
 } from './DestinationAutocomplete'
+import { graphqlRequest, CREATE_TRIP_MUTATION, type CreateTripResponse } from '../api/graphql';
 
 type ChildAgeRange = 'Infant' | 'Toddler' | 'Child' | 'Teen'
 type BudgetLevel = 'budget' | 'moderate' | 'luxury'
@@ -129,7 +130,7 @@ export function PlannerForm() {
     })
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault()
 
     const destinationIsValid = formData.destination.trim().length > 0
@@ -154,7 +155,13 @@ export function PlannerForm() {
       ...(formData.transportation ? { transportation: formData.transportation } : {}),
     }
 
-    console.log('Travel planner form data:', payload)
+    const result = await graphqlRequest<CreateTripResponse>(CREATE_TRIP_MUTATION, {
+      input: payload,
+    })
+
+    console.log("created trip: ", result.createTrip.trip);
+
+   // console.log('Travel planner form data:', payload)
   }
 
   return (
