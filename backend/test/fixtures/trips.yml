@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  destination: MyString
+  departure_date: 2026-09-20
+  return_date: 2026-09-20
+  adults: 1
+  budget: MyString
+  travel_pace: MyString
+  transportation: MyString
+
+two:
+  destination: MyString
+  departure_date: 2026-09-20
+  return_date: 2026-09-20
+  adults: 1
+  budget: MyString
+  travel_pace: MyString
+  transportation: MyString

@@ -352,12 +352,17 @@ h1 {
     transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
+.submit-button:disabled {
+    cursor: wait;
+    opacity: .9;
+}
+
 .submit-button span {
     font-size: 1.35rem;
     line-height: 1;
 }
 
-.submit-button:hover {
+.submit-button:hover:not(:disabled) {
     background: #174f35;
     box-shadow: 0 10px 20px rgba(31, 99, 68, .2);
     transform: translateY(-1px);
@@ -366,6 +371,45 @@ h1 {
 .submit-button:focus-visible {
     outline: 3px solid rgba(57, 130, 93, .36);
     outline-offset: 3px;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, .35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.status-message {
+    margin-bottom: 18px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.status-message p {
+    margin: 0;
+}
+
+.status-message--success {
+    border: 1px solid #bfdcc9;
+    background: #edf9f2;
+    color: #1f6344;
+}
+
+.status-message--error {
+    border: 1px solid #f0c7c7;
+    background: #fff3f3;
+    color: #9b2c2c;
 }
 
 .app-note {

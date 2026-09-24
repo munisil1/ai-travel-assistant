@@ -98,6 +98,9 @@ const initialFormData: PlannerFormData = {
 
 export function PlannerForm() {
   const [formData, setFormData] = useState<PlannerFormData>(initialFormData)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submissionError, setSubmissionError] = useState<string | null>(null)
+  const [createdTripId, setCreatedTripId] = useState<string | null>(null)
 
   const updateChildAgeRange = (ageRange: ChildAgeRange): void => {
     setFormData((currentData) => {
@@ -155,17 +158,40 @@ export function PlannerForm() {
       ...(formData.transportation ? { transportation: formData.transportation } : {}),
     }
 
-    const result = await graphqlRequest<CreateTripResponse>(CREATE_TRIP_MUTATION, {
-      input: payload,
-    })
+    setIsSubmitting(true)
+    setSubmissionError(null)
+    setCreatedTripId(null)
 
-    console.log("created trip: ", result.createTrip.trip);
+    try {
+      const result = await graphqlRequest<CreateTripResponse>(CREATE_TRIP_MUTATION, {
+        input: payload,
+      })
 
-   // console.log('Travel planner form data:', payload)
+      setCreatedTripId(result.createTrip.trip.id)
+      console.log('created trip: ', result.createTrip.trip)
+    } catch (error) {
+      console.error('Error creating trip: ', error)
+      setSubmissionError('An error occurred while creating the trip. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <form className="planner-form" onSubmit={handleSubmit}>
+    <>
+      {submissionError && (
+        <div className="status-message status-message--error" role="alert">
+          <p>{submissionError}</p>
+        </div>
+      )}
+
+      {createdTripId && (
+        <div className="status-message status-message--success" aria-live="polite">
+          <p>Trip created successfully! ID: {createdTripId}</p>
+        </div>
+      )}
+
+      <form className="planner-form" onSubmit={handleSubmit}>
       <div className="form-heading">
         <div>
           <p className="form-heading__overline">Start planning</p>
@@ -395,10 +421,25 @@ export function PlannerForm() {
         </fieldset>
       </div>
 
-      <button className="submit-button" type="submit">
-        Plan My Trip
-        <span aria-hidden="true">→</span>
+      <button
+        className="submit-button"
+        type="submit"
+        disabled={isSubmitting}
+        aria-busy={isSubmitting}
+      >
+        {isSubmitting ? (
+          <>
+            <span className="spinner" aria-hidden="true" />
+            <span>Planning...</span>
+          </>
+        ) : (
+          <>
+            <span>Plan My Trip</span>
+            <span aria-hidden="true">→</span>
+          </>
+        )}
       </button>
     </form>
+    </>
   )
 }
