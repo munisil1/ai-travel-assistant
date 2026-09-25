@@ -2,7 +2,7 @@
 
 module Types
   class MutationType < Types::BaseObject
-    # TODO: remove me
+    field :generate_itinerary, mutation: Mutations::GenerateItinerary
     field :create_trip, mutation: Mutations::CreateTrip
   end
 end

@@ -49,3 +49,7 @@ group :development do
   # gem "spring"
 end
 
+
+gem "openai", "~> 0.75.0"
+
+gem "dotenv-rails", "~> 3.2"

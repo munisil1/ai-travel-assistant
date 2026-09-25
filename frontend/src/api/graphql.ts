@@ -61,3 +61,44 @@ export interface CreateTripResponse {
         };
     };
 }
+
+export const GENERATE_ITINERARY_MUTATION = `
+  mutation GenerateItinerary($input: GenerateItineraryInput!) {
+    generateItinerary(input: $input) {
+      itinerary {
+        summary
+        days {
+          day
+          date
+          activities {
+            timeOfDay
+            title
+            description
+            duration
+          }
+        }
+        packingList
+      }
+    }
+  }
+`;
+
+export interface GenerateItineraryResponse {
+    generateItinerary: {
+        itinerary: {
+            summary: string;
+            days: {
+                day: number;
+                date: string;
+                activities: {
+                    timeOfDay: string;
+                    title: string;
+                    description: string;
+                    duration: string;
+                }[];
+            }[];
+            packingList: string[];
+        };
+    };
+}
+

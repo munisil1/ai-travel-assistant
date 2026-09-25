@@ -3,7 +3,14 @@ import {
   DestinationAutocomplete,
   type SelectedDestination,
 } from './DestinationAutocomplete'
-import { graphqlRequest, CREATE_TRIP_MUTATION, type CreateTripResponse } from '../api/graphql';
+import { ItineraryDisplay } from './ItineraryDisplay'
+import {
+  graphqlRequest,
+  CREATE_TRIP_MUTATION,
+  type CreateTripResponse,
+  GENERATE_ITINERARY_MUTATION,
+  type GenerateItineraryResponse,
+} from '../api/graphql'
 
 type ChildAgeRange = 'Infant' | 'Toddler' | 'Child' | 'Teen'
 type BudgetLevel = 'budget' | 'moderate' | 'luxury'
@@ -101,6 +108,7 @@ export function PlannerForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionError, setSubmissionError] = useState<string | null>(null)
   const [createdTripId, setCreatedTripId] = useState<string | null>(null)
+  const [itinerary, setItinerary] = useState<GenerateItineraryResponse['generateItinerary']['itinerary'] | null>(null)
 
   const updateChildAgeRange = (ageRange: ChildAgeRange): void => {
     setFormData((currentData) => {
@@ -168,7 +176,15 @@ export function PlannerForm() {
       })
 
       setCreatedTripId(result.createTrip.trip.id)
-      console.log('created trip: ', result.createTrip.trip)
+      const trip = result.createTrip.trip;
+
+      // Generate the itinerary from the created trip
+      const itineraryResult = await graphqlRequest<GenerateItineraryResponse>(GENERATE_ITINERARY_MUTATION, {
+        input: {
+          tripId: trip.id,
+        }
+      })
+      setItinerary(itineraryResult.generateItinerary.itinerary)
     } catch (error) {
       console.error('Error creating trip: ', error)
       setSubmissionError('An error occurred while creating the trip. Please try again.')
@@ -440,6 +456,8 @@ export function PlannerForm() {
         )}
       </button>
     </form>
+
+    <ItineraryDisplay itinerary={itinerary} />
     </>
   )
 }
