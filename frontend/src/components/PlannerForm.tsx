@@ -215,8 +215,7 @@ export function PlannerForm() {
         <section className="planner-form planner-form--itinerary" aria-live="polite">
           <div className="form-heading">
             <div>
-              <p className="form-heading__overline">Your plan</p>
-              <h2>Trip itinerary</h2>
+              <h2>Sample Trip Itinerary</h2>
             </div>
             <span className="form-heading__step">02 / 02</span>
           </div>

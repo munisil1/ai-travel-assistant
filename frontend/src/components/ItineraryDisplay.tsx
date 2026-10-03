@@ -14,6 +14,16 @@ type ItineraryDisplayProps = {
   tripMeta?: ItineraryTripMeta | null
 }
 
+const formatTagValue = (value: string) =>
+  value
+    .trim()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ')
+
 export function ItineraryDisplay({ itinerary, tripMeta }: ItineraryDisplayProps) {
   if (!itinerary) {
     return (
@@ -23,23 +33,39 @@ export function ItineraryDisplay({ itinerary, tripMeta }: ItineraryDisplayProps)
     )
   }
 
-  const dayIcons = ['🌅', '🏛️', '🍽️', '🌿', '🎒', '✨']
+  const tripTags = tripMeta
+    ? [
+        { icon: '📍', label: 'Destination', value: tripMeta.destination },
+        {
+          icon: '🗓️',
+          label: 'Dates',
+          value: `${tripMeta.departureDate} → ${tripMeta.returnDate}`,
+        },
+        { icon: '👥', label: 'Travelers', value: `${tripMeta.adults} adults` },
+        tripMeta.travelPace ? { icon: '⚡', label: 'Pace', value: formatTagValue(tripMeta.travelPace) } : null,
+        tripMeta.transportation ? { icon: '🚗', label: 'Transport', value: formatTagValue(tripMeta.transportation) } : null,
+      ].filter((tag): tag is { icon: string; label: string; value: string } => Boolean(tag))
+    : []
 
   return (
     <section className="itinerary-display" aria-live="polite">
       <div className="itinerary-display__summary">
         <div className="itinerary-section-tag">
-          <span aria-hidden="true">✦</span>
           <p className="form-heading__overline">Overview</p>
         </div>
 
-        {tripMeta && (
+        {tripTags.length > 0 && (
           <div className="itinerary-summary-bar" aria-label="Trip summary">
-            <span className="itinerary-summary-pill">📍 {tripMeta.destination}</span>
-            <span className="itinerary-summary-pill">🗓️ {tripMeta.departureDate} → {tripMeta.returnDate}</span>
-            <span className="itinerary-summary-pill">👥 {tripMeta.adults} adults</span>
-            {tripMeta.travelPace ? <span className="itinerary-summary-pill">⚡ {tripMeta.travelPace}</span> : null}
-            {tripMeta.transportation ? <span className="itinerary-summary-pill">🚗 {tripMeta.transportation}</span> : null}
+            {tripTags.map((tag) => (
+              <span
+                key={`${tag.label}-${tag.value}`}
+                className={`itinerary-summary-pill itinerary-summary-pill--${tag.label.toLowerCase()}`}
+              >
+                <span aria-hidden="true" className="itinerary-summary-pill__icon">{tag.icon}</span>
+                <span className="itinerary-summary-pill__label">{tag.label}</span>
+                <span className="itinerary-summary-pill__value">{tag.value}</span>
+              </span>
+            ))}
           </div>
         )}
 
@@ -47,18 +73,10 @@ export function ItineraryDisplay({ itinerary, tripMeta }: ItineraryDisplayProps)
       </div>
 
       <div className="itinerary-days">
-        {itinerary.days.map((day, index) => (
+        {itinerary.days.map((day) => (
           <article key={`${day.date}-${day.day}`} className="itinerary-day">
             <div className="itinerary-day__header">
-              <div className="itinerary-day__badge" aria-hidden="true">
-                {dayIcons[index % dayIcons.length]}
-              </div>
-              <div>
-                <h3>
-                  Day {day.day}
-                  <span>{day.date}</span>
-                </h3>
-              </div>
+              <h3>Day {day.day}</h3>
             </div>
 
             <ul>
@@ -80,12 +98,14 @@ export function ItineraryDisplay({ itinerary, tripMeta }: ItineraryDisplayProps)
       {itinerary.packingList.length > 0 && (
         <div className="itinerary-packing-list">
           <div className="itinerary-section-tag itinerary-section-tag--packing">
-            <span aria-hidden="true">🎒</span>
             <h3>Packing list</h3>
           </div>
           <ul>
             {itinerary.packingList.map((item, index) => (
-              <li key={`${item}-${index}`}>{item}</li>
+              <p>
+                <input type="checkbox" id={`packing-${index}`} />
+                <label htmlFor={`packing-${index}`}>{item}</label>
+              </p>
             ))}
           </ul>
         </div>
