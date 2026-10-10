@@ -70,6 +70,10 @@ export const GENERATE_ITINERARY_MUTATION = `
         days {
           day
           date
+          weather {
+            temperature
+            conditions
+          }
           activities {
             timeOfDay
             title
@@ -90,6 +94,10 @@ export interface GenerateItineraryResponse {
             days: {
                 day: number;
                 date: string;
+                weather?: {
+                    temperature: number;
+                    conditions: string;
+                }
                 activities: {
                     timeOfDay: string;
                     title: string;

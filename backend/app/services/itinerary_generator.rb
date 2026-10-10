@@ -98,7 +98,22 @@ class ItineraryGenerator
 
       #  Rails.logger.info("OpenAI API response: #{response.to_h}")
 
-        response.output_text
+        result = JSON.parse(response.output_text)
+
+        result["days"].each do |day|
+            weather_day = weather["days"].find do |forecast|
+                forecast["datetime"] == day["date"]
+            end
+
+            if weather_day
+                day["weather"] = {
+                "temperature" => weather_day["tempmax"],
+                "conditions" => weather_day["conditions"]
+                }
+            end
+        end
+
+        result.to_json
     end
 
     private 

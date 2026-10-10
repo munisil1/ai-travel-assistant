@@ -1,23 +1,27 @@
 require "net/http"
-require "uri"
 require "json"
+require "uri"
 
 class WeatherService
-    def self.get_forecast(latitude:, longitude:, start_date:, end_date:)
-        uri = URI("https://api.open-meteo.com/v1/forecast")
+  def self.get_forecast(latitude:, longitude:, start_date:, end_date:)
+    uri = URI(
+      "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/" \
+      "#{latitude},#{longitude}/#{start_date}/#{end_date}"
+    )
 
-        params = {
-            latitude: latitude,
-            longitude: longitude,
-            start_date: start_date,
-            end_date: end_date,
-            daily: "temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode",
-            timezone: "auto"
-        }
+    params = {
+      unitGroup: "metric",
+      include: "days",
+      key: ENV.fetch("VISUAL_CROSSING_API_KEY"),
+      contentType: "json"
+    }
 
-        uri.query = URI.encode_www_form(params)
-        response = Net::HTTP.get_response(uri)
+    uri.query = URI.encode_www_form(params)
 
-        JSON.parse(response.body) if response.is_a?(Net::HTTPSuccess)
-    end
+    response = Net::HTTP.get_response(uri)
+
+    raise "Weather API error: #{response.code} #{response.body}" unless response.is_a?(Net::HTTPSuccess)
+
+    JSON.parse(response.body)
+  end
 end

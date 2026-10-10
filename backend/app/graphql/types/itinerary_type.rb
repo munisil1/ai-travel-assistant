@@ -7,10 +7,16 @@ module Types
     field :duration, String, null: true
   end
 
+  class WeatherType < Types::BaseObject
+    field :temperature, Float, null: false
+    field :conditions, String, null: false
+  end
+
   class DayType < Types::BaseObject
     field :day, Integer, null: false
     field :date, String, null: false
     field :activities, [Types::ActivityType], null: true
+    field :weather, Types::WeatherType, null: true
   end
 
   class ItineraryType < Types::BaseObject
