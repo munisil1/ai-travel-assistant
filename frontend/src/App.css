@@ -540,6 +540,10 @@ h1 {
 }
 
 .itinerary-day__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
     margin-bottom: 14px;
 }
 
@@ -548,6 +552,22 @@ h1 {
     color: #163329;
     font-size: clamp(1.05rem, 2vw, 1.35rem);
     font-weight: 800;
+}
+
+.itinerary-day__weather {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: #375349;
+    font-size: .95rem;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.itinerary-day__weather span:first-child {
+    font-size: 1.2rem;
+    line-height: 1;
 }
 
 .itinerary-day ul,

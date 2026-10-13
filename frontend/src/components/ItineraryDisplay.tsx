@@ -1,4 +1,5 @@
 import type { GenerateItineraryResponse } from '../api/graphql'
+import { getWeatherIcon } from '../utils/weatherIcons'
 
 type ItineraryTripMeta = {
   destination: string
@@ -77,7 +78,16 @@ export function ItineraryDisplay({ itinerary, tripMeta }: ItineraryDisplayProps)
           <article key={`${day.date}-${day.day}`} className="itinerary-day">
             <div className="itinerary-day__header">
               <h3>Day {day.day}</h3>
-              <h5> Weather {day.weather?.temperature}°C, {day.weather?.conditions}</h5>
+              {day.weather && (
+                <p
+                  className="itinerary-day__weather"
+                  aria-label={`${day.weather.conditions}, ${Math.round(day.weather.temperature)} degrees Celsius`}
+                  title={day.weather.conditions}
+                >
+                  <span aria-hidden="true">{getWeatherIcon(day.weather.conditions)}</span>
+                  <span>{Math.round(day.weather.temperature)}°C</span>
+                </p>
+              )}
             </div>
 
             <ul>
