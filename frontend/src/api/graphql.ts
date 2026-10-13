@@ -53,11 +53,11 @@ export interface CreateTripResponse {
             departureDate: string;
             returnDate: string;
             adults: number;
-            budget: number;
-            travelPace: string;
-            transportation: string;
+            budget: string | null;
+            travelPace: string | null;
+            transportation: string | null;
             interests: string[];
-            children: number;
+            children: string[] | null;
         };
     };
 }

@@ -52,8 +52,16 @@ h1 {
     line-height: 1.65;
 }
 
+.planner-form-host {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+}
+
 .planner-form {
     width: min(100%, 760px);
+    margin-inline: auto;
     padding: clamp(28px, 4vw, 42px);
     border: 1px solid rgba(32, 73, 57, .13);
     border-radius: 20px;
@@ -465,6 +473,148 @@ h1 {
     border: 1px solid #f0c7c7;
     background: #fff3f3;
     color: #9b2c2c;
+}
+
+.generation-overlay {
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(29, 48, 37, .42);
+    backdrop-filter: blur(9px);
+    animation: generation-overlay-in 220ms ease-out both;
+}
+
+.generation-dialog {
+    width: min(100%, 460px);
+    padding: 42px 40px 34px;
+    border: 1px solid rgba(111, 132, 108, .25);
+    border-radius: 20px;
+    background: #fbfaf5;
+    box-shadow: 0 28px 80px rgba(18, 34, 24, .24), 0 3px 10px rgba(18, 34, 24, .08);
+    color: #34483a;
+    text-align: center;
+    animation: generation-dialog-in 320ms cubic-bezier(.2, .75, .25, 1) both;
+}
+
+.generation-dialog:focus {
+    outline: none;
+}
+
+.generation-dialog__ornament {
+    position: relative;
+    display: grid;
+    width: 78px;
+    height: 78px;
+    place-items: center;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    background: #eef2e8;
+}
+
+.generation-dialog__orbit {
+    position: absolute;
+    inset: 5px;
+    border: 1px solid rgba(93, 123, 91, .22);
+    border-radius: 50%;
+}
+
+.generation-dialog__spinner {
+    width: 48px;
+    height: 48px;
+    border: 2px solid rgba(82, 116, 83, .2);
+    border-top-color: #527453;
+    border-right-color: #527453;
+    border-radius: 50%;
+    animation: generation-spin 1.15s cubic-bezier(.55, .1, .45, .9) infinite;
+}
+
+.generation-dialog__spark {
+    position: absolute;
+    color: #b17b4c;
+    font-size: 1rem;
+}
+
+.generation-dialog__eyebrow {
+    margin: 0 0 9px;
+    color: #72846f;
+    font-size: .67rem;
+    font-weight: 800;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+}
+
+.generation-dialog h2 {
+    margin: 0;
+    color: #293d31;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.8rem;
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+.generation-dialog__description {
+    max-width: 350px;
+    margin: 14px auto 22px;
+    color: #687468;
+    font-size: .91rem;
+    line-height: 1.65;
+}
+
+.generation-dialog__progress {
+    position: relative;
+    height: 3px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e4e8df;
+}
+
+.generation-dialog__progress span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 38%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #789174, #b5a27a);
+    animation: generation-progress 1.7s ease-in-out infinite;
+}
+
+.generation-dialog__note {
+    margin: 12px 0 0;
+    color: #8a9084;
+    font-size: .73rem;
+}
+
+@keyframes generation-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes generation-progress {
+    0% { transform: translateX(-110%); }
+    100% { transform: translateX(280%); }
+}
+
+@keyframes generation-overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes generation-dialog-in {
+    from { opacity: 0; transform: translateY(10px) scale(.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .generation-overlay,
+    .generation-dialog,
+    .generation-dialog__spinner,
+    .generation-dialog__progress span {
+        animation-duration: .01ms;
+        animation-iteration-count: 1;
+    }
 }
 
 .planner-form--itinerary {

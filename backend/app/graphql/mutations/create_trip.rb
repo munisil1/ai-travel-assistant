@@ -4,10 +4,10 @@ module Mutations
       argument :departure_date, GraphQL::Types::ISO8601Date, required: true
       argument :return_date, GraphQL::Types::ISO8601Date, required: true
       argument :adults, Integer, required: true
-      argument :budget, String, required: true
-      argument :travel_pace, String, required: true
-      argument :transportation, String, required: true
-      argument :interests, [String], required: true
+      argument :budget, String, required: false
+      argument :travel_pace, String, required: false
+      argument :transportation, String, required: false
+      argument :interests, [String], required: false
       argument :children, GraphQL::Types::JSON, required: false
 
       field :trip, Types::TripType, null: true
@@ -22,7 +22,7 @@ module Mutations
             budget: attrs[:budget],
             travel_pace: attrs[:travel_pace],
             transportation: attrs[:transportation],
-            interests: attrs[:interests],
+            interests: attrs[:interests] || [],
             children: attrs[:children]
         )
 

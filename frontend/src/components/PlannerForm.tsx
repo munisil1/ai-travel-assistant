@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   DestinationAutocomplete,
   type SelectedDestination,
@@ -104,10 +104,10 @@ const initialFormData: PlannerFormData = {
 }
 
 export function PlannerForm() {
+  const loadingDialogRef = useRef<HTMLDivElement>(null)
   const [formData, setFormData] = useState<PlannerFormData>(initialFormData)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionError, setSubmissionError] = useState<string | null>(null)
-  const [createdTripId, setCreatedTripId] = useState<string | null>(null)
   const [itinerary, setItinerary] = useState<GenerateItineraryResponse['generateItinerary']['itinerary'] | null>(null)
   const [itineraryFormSnapshot, setItineraryFormSnapshot] = useState<string | null>(null)
   const [currentStep, setCurrentStep] = useState<'details' | 'itinerary'>('details')
@@ -170,14 +170,12 @@ export function PlannerForm() {
 
     setIsSubmitting(true)
     setSubmissionError(null)
-    setCreatedTripId(null)
 
     try {
       const result = await graphqlRequest<CreateTripResponse>(CREATE_TRIP_MUTATION, {
         input: payload,
       })
 
-      setCreatedTripId(result.createTrip.trip.id)
       const trip = result.createTrip.trip;
 
       // Generate the itinerary from the created trip
@@ -200,38 +198,45 @@ export function PlannerForm() {
   const isItineraryStep = currentStep === 'itinerary'
   const canViewSavedItinerary = itinerary !== null && itineraryFormSnapshot === JSON.stringify(formData)
 
+  useEffect(() => {
+    if (isSubmitting) {
+      loadingDialogRef.current?.focus()
+    }
+  }, [isSubmitting])
+
   return (
     <>
-      {submissionError && (
-        <div className="status-message status-message--error" role="alert">
-          <p>{submissionError}</p>
-        </div>
-      )}
+      <div className="planner-form-host" inert={isSubmitting}>
+        {submissionError && (
+          <div className="status-message status-message--error" role="alert">
+            <p>{submissionError}</p>
+          </div>
+        )}
 
-      {isItineraryStep ? (
-        <section className="planner-form planner-form--itinerary" aria-live="polite">
-          <button
-            type="button"
-            className="back-button"
-            onClick={() => setCurrentStep('details')}
-          >
-            ← Back to trip details
-          </button>
+        {isItineraryStep ? (
+          <section className="planner-form planner-form--itinerary" aria-live="polite">
+            <button
+              type="button"
+              className="back-button"
+              onClick={() => setCurrentStep('details')}
+            >
+              ← Back to trip details
+            </button>
 
-          <ItineraryDisplay
-            itinerary={itinerary}
-            tripMeta={{
-              destination: formData.destination.trim(),
-              departureDate: formData.departureDate,
-              returnDate: formData.returnDate,
-              adults: formData.adults,
-              travelPace: formData.travelPace,
-              transportation: formData.transportation,
-            }}
-          />
-        </section>
-      ) : (
-        <form className="planner-form" onSubmit={handleSubmit}>
+            <ItineraryDisplay
+              itinerary={itinerary}
+              tripMeta={{
+                destination: formData.destination.trim(),
+                departureDate: formData.departureDate,
+                returnDate: formData.returnDate,
+                adults: formData.adults,
+                travelPace: formData.travelPace,
+                transportation: formData.transportation,
+              }}
+            />
+          </section>
+        ) : (
+          <form className="planner-form" onSubmit={handleSubmit}>
           <div className="form-heading">
             <div>
               <p className="form-heading__overline">Start planning</p>
@@ -461,7 +466,7 @@ export function PlannerForm() {
             </fieldset>
           </div>
 
-          <div className={`planner-form__actions${canViewSavedItinerary ? ' planner-form__actions--with-saved' : ''}`}>
+            <div className={`planner-form__actions${canViewSavedItinerary ? ' planner-form__actions--with-saved' : ''}`}>
             <button
               className="submit-button"
               type="submit"
@@ -487,8 +492,38 @@ export function PlannerForm() {
                 View saved itinerary
               </button>
             )}
+            </div>
+          </form>
+        )}
+      </div>
+
+      {isSubmitting && (
+        <div className="generation-overlay">
+          <div
+            aria-labelledby="generation-dialog-title"
+            aria-describedby="generation-dialog-description"
+            aria-modal="true"
+            className="generation-dialog"
+            ref={loadingDialogRef}
+            role="dialog"
+            tabIndex={-1}
+          >
+            <div className="generation-dialog__ornament" aria-hidden="true">
+              <span className="generation-dialog__orbit" />
+              <span className="generation-dialog__spinner" />
+              <span className="generation-dialog__spark">✦</span>
+            </div>
+            <p className="generation-dialog__eyebrow">A moment for your journey</p>
+            <h2 id="generation-dialog-title">Curating your itinerary</h2>
+            <p id="generation-dialog-description" className="generation-dialog__description">
+              Bringing your travel preferences and destination forecast together into a thoughtful day-by-day plan.
+            </p>
+            <div className="generation-dialog__progress" aria-hidden="true">
+              <span />
+            </div>
+            <p className="generation-dialog__note" role="status">This can take a little while.</p>
           </div>
-        </form>
+        </div>
       )}
     </>
   )
