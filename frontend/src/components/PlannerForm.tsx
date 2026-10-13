@@ -109,6 +109,7 @@ export function PlannerForm() {
   const [submissionError, setSubmissionError] = useState<string | null>(null)
   const [createdTripId, setCreatedTripId] = useState<string | null>(null)
   const [itinerary, setItinerary] = useState<GenerateItineraryResponse['generateItinerary']['itinerary'] | null>(null)
+  const [itineraryFormSnapshot, setItineraryFormSnapshot] = useState<string | null>(null)
   const [currentStep, setCurrentStep] = useState<'details' | 'itinerary'>('details')
 
   const updateChildAgeRange = (ageRange: ChildAgeRange): void => {
@@ -186,6 +187,7 @@ export function PlannerForm() {
         }
       })
       setItinerary(itineraryResult.generateItinerary.itinerary)
+      setItineraryFormSnapshot(JSON.stringify(formData))
       setCurrentStep('itinerary')
     } catch (error) {
       console.error('Error creating trip: ', error)
@@ -196,6 +198,7 @@ export function PlannerForm() {
   }
 
   const isItineraryStep = currentStep === 'itinerary'
+  const canViewSavedItinerary = itinerary !== null && itineraryFormSnapshot === JSON.stringify(formData)
 
   return (
     <>
@@ -205,21 +208,8 @@ export function PlannerForm() {
         </div>
       )}
 
-      {createdTripId && !isItineraryStep && (
-        <div className="status-message status-message--success" aria-live="polite">
-          <p>Trip created successfully! ID: {createdTripId}</p>
-        </div>
-      )}
-
       {isItineraryStep ? (
         <section className="planner-form planner-form--itinerary" aria-live="polite">
-          <div className="form-heading">
-            <div>
-              <h2>Sample Trip Itinerary</h2>
-            </div>
-            <span className="form-heading__step">02 / 02</span>
-          </div>
-
           <button
             type="button"
             className="back-button"
@@ -471,24 +461,33 @@ export function PlannerForm() {
             </fieldset>
           </div>
 
-          <button
-            className="submit-button"
-            type="submit"
-            disabled={isSubmitting}
-            aria-busy={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <span className="spinner" aria-hidden="true" />
-                <span> ✨ Creating your personalized itinerary...</span>
-              </>
-            ) : (
-              <>
+          <div className={`planner-form__actions${canViewSavedItinerary ? ' planner-form__actions--with-saved' : ''}`}>
+            <button
+              className="submit-button"
+              type="submit"
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="spinner" aria-hidden="true" />
+                  <span> ✨ Creating your personalized itinerary...</span>
+                </>
+              ) : (
                 <span>Generate My Itinerary</span>
-                <span aria-hidden="true">→</span>
-              </>
+              )}
+            </button>
+
+            {canViewSavedItinerary && (
+              <button
+                className="saved-itinerary-button"
+                type="button"
+                onClick={() => setCurrentStep('itinerary')}
+              >
+                View saved itinerary
+              </button>
             )}
-          </button>
+          </div>
         </form>
       )}
     </>

@@ -8,10 +8,10 @@ function App() {
         <div className="hero__copy">
           <p className="eyebrow">Thoughtful travel, simply planned</p>
           <h1 id="page-title">AI Travel Assistant</h1>
-          <p className="hero__description">
+          {/* <p className="hero__description">
             Shape a trip around the people going, the time you have, and the
             experiences you want to bring home.
-          </p>
+          </p> */}
         </div>
 
         <PlannerForm />
