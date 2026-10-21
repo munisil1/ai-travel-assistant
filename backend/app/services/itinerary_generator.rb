@@ -9,13 +9,18 @@ class ItineraryGenerator
     def call
 
         coordinates = GeocodingService.get_coordinates(@trip.destination)
-        
-        weather = WeatherService.get_forecast(
-            latitude: coordinates[:latitude],
-            longitude: coordinates[:longitude],
-            start_date: @trip.departure_date.to_s,
-            end_date: @trip.return_date.to_s
-        )
+
+                weather = if coordinates
+                    WeatherService.get_forecast(
+                        latitude: coordinates[:latitude],
+                        longitude: coordinates[:longitude],
+                        start_date: @trip.departure_date.to_s,
+                        end_date: @trip.return_date.to_s
+                    )
+                else
+                    Rails.logger.warn("Skipping weather forecast: no coordinates found for #{@trip.destination.inspect}")
+                    nil
+                end
 
         response = @client.responses.create(
             model: "gpt-5.6-luna",
@@ -101,7 +106,7 @@ class ItineraryGenerator
         result = JSON.parse(response.output_text)
 
         result["days"].each do |day|
-            weather_day = weather["days"].find do |forecast|
+            weather_day = weather&.dig("days")&.find do |forecast|
                 forecast["datetime"] == day["date"]
             end
 
@@ -131,10 +136,10 @@ class ItineraryGenerator
       Interests: #{@trip.interests}
       Travel pace: #{@trip.travel_pace}
       Transportation: #{@trip.transportation}
-      Weather forecast: #{weather.to_json}
+    Weather forecast: #{weather ? weather.to_json : "Unavailable for this destination"}
 
-      Create a practical itinerary that matches the traveler's
-      interests, budget, pace, and transportation preferences.
+    Create a practical itinerary that matches the traveler's
+    interests, budget, pace, and transportation preferences. Use the weather forecast when available.
 
       Return the response as JSON.
     PROMPT
