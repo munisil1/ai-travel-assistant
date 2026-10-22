@@ -10,6 +10,8 @@ import {
   type CreateTripResponse,
   GENERATE_ITINERARY_MUTATION,
   type GenerateItineraryResponse,
+  type GetTripResponse,
+  GET_TRIP_QUERY,
 } from '../api/graphql'
 
 type ChildAgeRange = 'Infant' | 'Toddler' | 'Child' | 'Teen'
@@ -109,7 +111,6 @@ export function PlannerForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionError, setSubmissionError] = useState<string | null>(null)
   const [itinerary, setItinerary] = useState<GenerateItineraryResponse['generateItinerary']['itinerary'] | null>(null)
-  const [itineraryFormSnapshot, setItineraryFormSnapshot] = useState<string | null>(null)
   const [currentStep, setCurrentStep] = useState<'details' | 'itinerary'>('details')
 
   const updateChildAgeRange = (ageRange: ChildAgeRange): void => {
@@ -170,6 +171,7 @@ export function PlannerForm() {
 
     setIsSubmitting(true)
     setSubmissionError(null)
+    setItinerary(null)
 
     try {
       const result = await graphqlRequest<CreateTripResponse>(CREATE_TRIP_MUTATION, {
@@ -177,6 +179,7 @@ export function PlannerForm() {
       })
 
       const trip = result.createTrip.trip;
+      localStorage.setItem('currentTripId', trip.id); // Store the trip ID in localStorage
 
       // Generate the itinerary from the created trip
       const itineraryResult = await graphqlRequest<GenerateItineraryResponse>(GENERATE_ITINERARY_MUTATION, {
@@ -185,7 +188,6 @@ export function PlannerForm() {
         }
       })
       setItinerary(itineraryResult.generateItinerary.itinerary)
-      setItineraryFormSnapshot(JSON.stringify(formData))
       setCurrentStep('itinerary')
     } catch (error) {
       console.error('Error creating trip: ', error)
@@ -196,7 +198,49 @@ export function PlannerForm() {
   }
 
   const isItineraryStep = currentStep === 'itinerary'
-  const canViewSavedItinerary = itinerary !== null && itineraryFormSnapshot === JSON.stringify(formData)
+  const canViewSavedItinerary = itinerary !== null
+
+  useEffect(() => {
+    const savedTripId = localStorage.getItem('currentTripId')
+
+    if (!savedTripId) return
+
+    const loadTrip = async () => {
+      try {
+        const result = await graphqlRequest<GetTripResponse>(GET_TRIP_QUERY, {
+          id: savedTripId,
+        })
+
+        if (!result.trip) {
+          localStorage.removeItem('currentTripId')
+          return
+        }
+
+        setFormData({
+          destination: result.trip.destination,
+          selectedDestination: null,
+          departureDate: result.trip.departureDate,
+          returnDate: result.trip.returnDate,
+          adults: result.trip.adults,
+          travelingWithChildren: Boolean(result.trip.children?.length),
+          childAgeRanges: (result.trip.children ?? []) as ChildAgeRange[],
+          budget: result.trip.budget as BudgetLevel | undefined,
+          interests: result.trip.interests as InterestValue[],
+          travelPace: result.trip.travelPace as TravelPace | undefined,
+          transportation: result.trip.transportation as TransportationMode | undefined,
+        })
+
+        if (result.trip.itinerary) {
+          setItinerary(result.trip.itinerary)
+          setCurrentStep('itinerary')
+        }
+      } catch (error) {
+        console.error('Error loading saved trip:', error)
+      }
+    }
+
+    loadTrip()
+  }, [])
 
   useEffect(() => {
     if (isSubmitting) {
@@ -237,261 +281,261 @@ export function PlannerForm() {
           </section>
         ) : (
           <form className="planner-form" onSubmit={handleSubmit}>
-          <div className="form-heading">
-            <div>
-              <p className="form-heading__overline">Start planning</p>
-              <h2>Where will you go?</h2>
+            <div className="form-heading">
+              <div>
+                <p className="form-heading__overline">Start planning</p>
+                <h2>Where will you go?</h2>
+              </div>
+              <span className="form-heading__step">01 / 02</span>
             </div>
-            <span className="form-heading__step">01 / 02</span>
-          </div>
 
-          <div className="form-grid">
-            <label className="field field--wide" htmlFor="destination">
-              <span>Destination*</span>
-              <DestinationAutocomplete
-                value={formData.destination}
-                onChange={(destination) =>
-                  setFormData((currentData) => ({
-                    ...currentData,
-                    destination,
-                    selectedDestination: null,
-                  }))
-                }
-                onSelect={(selectedDestination) =>
-                  setFormData((currentData) => ({
-                    ...currentData,
-                    selectedDestination,
-                  }))
-                }
-              />
-            </label>
-
-            <label className="field" htmlFor="departure-date">
-              <span>Departure*</span>
-              <input
-                id="departure-date"
-                name="departureDate"
-                type="date"
-                required
-                value={formData.departureDate}
-                onChange={(event) =>
-                  setFormData((currentData) => ({
-                    ...currentData,
-                    departureDate: event.target.value,
-                  }))
-                }
-              />
-            </label>
-
-            <label className="field" htmlFor="return-date">
-              <span>Return*</span>
-              <input
-                id="return-date"
-                name="returnDate"
-                type="date"
-                required
-                min={formData.departureDate || undefined}
-                value={formData.returnDate}
-                onChange={(event) =>
-                  setFormData((currentData) => ({
-                    ...currentData,
-                    returnDate: event.target.value,
-                  }))
-                }
-              />
-            </label>
-
-            <label className="field" htmlFor="adults">
-              <span>Adults</span>
-              <select
-                id="adults"
-                name="adults"
-                value={formData.adults}
-                onChange={(event) =>
-                  setFormData((currentData) => ({
-                    ...currentData,
-                    adults: Number(event.target.value),
-                  }))
-                }
-              >
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((adultCount) => (
-                  <option key={adultCount} value={adultCount}>
-                    {adultCount} {adultCount === 1 ? 'adult' : 'adults'}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <fieldset className="children-fieldset">
-            <legend>Traveling with children?</legend>
-            <div className="choice-toggle">
-              <label>
-                <input
-                  type="radio"
-                  name="travelingWithChildren"
-                  checked={!formData.travelingWithChildren}
-                  onChange={() => setTravelingWithChildren(false)}
+            <div className="form-grid">
+              <label className="field field--wide" htmlFor="destination">
+                <span>Destination*</span>
+                <DestinationAutocomplete
+                  value={formData.destination}
+                  onChange={(destination) =>
+                    setFormData((currentData) => ({
+                      ...currentData,
+                      destination,
+                      selectedDestination: null,
+                    }))
+                  }
+                  onSelect={(selectedDestination) =>
+                    setFormData((currentData) => ({
+                      ...currentData,
+                      selectedDestination,
+                    }))
+                  }
                 />
-                <span>No</span>
               </label>
-              <label>
+
+              <label className="field" htmlFor="departure-date">
+                <span>Departure*</span>
                 <input
-                  type="radio"
-                  name="travelingWithChildren"
-                  checked={formData.travelingWithChildren}
-                  onChange={() => setTravelingWithChildren(true)}
+                  id="departure-date"
+                  name="departureDate"
+                  type="date"
+                  required
+                  value={formData.departureDate}
+                  onChange={(event) =>
+                    setFormData((currentData) => ({
+                      ...currentData,
+                      departureDate: event.target.value,
+                    }))
+                  }
                 />
-                <span>Yes</span>
+              </label>
+
+              <label className="field" htmlFor="return-date">
+                <span>Return*</span>
+                <input
+                  id="return-date"
+                  name="returnDate"
+                  type="date"
+                  required
+                  min={formData.departureDate || undefined}
+                  value={formData.returnDate}
+                  onChange={(event) =>
+                    setFormData((currentData) => ({
+                      ...currentData,
+                      returnDate: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+
+              <label className="field" htmlFor="adults">
+                <span>Adults</span>
+                <select
+                  id="adults"
+                  name="adults"
+                  value={formData.adults}
+                  onChange={(event) =>
+                    setFormData((currentData) => ({
+                      ...currentData,
+                      adults: Number(event.target.value),
+                    }))
+                  }
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((adultCount) => (
+                    <option key={adultCount} value={adultCount}>
+                      {adultCount} {adultCount === 1 ? 'adult' : 'adults'}
+                    </option>
+                  ))}
+                </select>
               </label>
             </div>
 
-            {formData.travelingWithChildren && (
-              <div className="age-picker" aria-label="Select child age ranges">
-                <p>Which age ranges are traveling?</p>
-                <div className="age-picker__options">
-                  {childAgeOptions.map((ageRange) => {
-                    const isSelected = formData.childAgeRanges.includes(ageRange)
+            <fieldset className="children-fieldset">
+              <legend>Traveling with children?</legend>
+              <div className="choice-toggle">
+                <label>
+                  <input
+                    type="radio"
+                    name="travelingWithChildren"
+                    checked={!formData.travelingWithChildren}
+                    onChange={() => setTravelingWithChildren(false)}
+                  />
+                  <span>No</span>
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="travelingWithChildren"
+                    checked={formData.travelingWithChildren}
+                    onChange={() => setTravelingWithChildren(true)}
+                  />
+                  <span>Yes</span>
+                </label>
+              </div>
+
+              {formData.travelingWithChildren && (
+                <div className="age-picker" aria-label="Select child age ranges">
+                  <p>Which age ranges are traveling?</p>
+                  <div className="age-picker__options">
+                    {childAgeOptions.map((ageRange) => {
+                      const isSelected = formData.childAgeRanges.includes(ageRange)
+
+                      return (
+                        <label className="age-option" key={ageRange}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => updateChildAgeRange(ageRange)}
+                          />
+                          <span>{ageRange}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </fieldset>
+
+            <div className="preferences-panel">
+              <div className="preferences-panel__row">
+                <label className="field" htmlFor="budget">
+                  <span>Budget</span>
+                  <select
+                    id="budget"
+                    name="budget"
+                    value={formData.budget ?? ''}
+                    onChange={(event) =>
+                      setFormData((currentData) => ({
+                        ...currentData,
+                        budget: event.target.value
+                          ? (event.target.value as BudgetLevel)
+                          : undefined,
+                      }))
+                    }
+                  >
+                    <option value="">Select budget</option>
+                    {budgetOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="field" htmlFor="travel-pace">
+                  <span>Travel pace</span>
+                  <select
+                    id="travel-pace"
+                    name="travelPace"
+                    value={formData.travelPace ?? ''}
+                    onChange={(event) =>
+                      setFormData((currentData) => ({
+                        ...currentData,
+                        travelPace: event.target.value
+                          ? (event.target.value as TravelPace)
+                          : undefined,
+                      }))
+                    }
+                  >
+                    <option value="">Select pace</option>
+                    {travelPaceOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <label className="field" htmlFor="transportation">
+                <span>Transportation</span>
+                <select
+                  id="transportation"
+                  name="transportation"
+                  value={formData.transportation ?? ''}
+                  onChange={(event) =>
+                    setFormData((currentData) => ({
+                      ...currentData,
+                      transportation: event.target.value
+                        ? (event.target.value as TransportationMode)
+                        : undefined,
+                    }))
+                  }
+                >
+                  <option value="">No preference</option>
+                  {transportationOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <fieldset className="interests-fieldset">
+                <legend>Interests</legend>
+                <div className="chip-picker" aria-label="Select travel interests">
+                  {interestOptions.map(({ label, value }) => {
+                    const selectedInterests = formData.interests ?? []
+                    const isSelected = selectedInterests.includes(value)
 
                     return (
-                      <label className="age-option" key={ageRange}>
+                      <label className="chip-option" key={value}>
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => updateChildAgeRange(ageRange)}
+                          onChange={() => updateInterest(value)}
                         />
-                        <span>{ageRange}</span>
+                        <span>{label}</span>
                       </label>
                     )
                   })}
                 </div>
-              </div>
-            )}
-          </fieldset>
-
-          <div className="preferences-panel">
-            <div className="preferences-panel__row">
-              <label className="field" htmlFor="budget">
-                <span>Budget</span>
-                <select
-                  id="budget"
-                  name="budget"
-                  value={formData.budget ?? ''}
-                  onChange={(event) =>
-                    setFormData((currentData) => ({
-                      ...currentData,
-                      budget: event.target.value
-                        ? (event.target.value as BudgetLevel)
-                        : undefined,
-                    }))
-                  }
-                >
-                  <option value="">Select budget</option>
-                  {budgetOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="field" htmlFor="travel-pace">
-                <span>Travel pace</span>
-                <select
-                  id="travel-pace"
-                  name="travelPace"
-                  value={formData.travelPace ?? ''}
-                  onChange={(event) =>
-                    setFormData((currentData) => ({
-                      ...currentData,
-                      travelPace: event.target.value
-                        ? (event.target.value as TravelPace)
-                        : undefined,
-                    }))
-                  }
-                >
-                  <option value="">Select pace</option>
-                  {travelPaceOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              </fieldset>
             </div>
 
-            <label className="field" htmlFor="transportation">
-              <span>Transportation</span>
-              <select
-                id="transportation"
-                name="transportation"
-                value={formData.transportation ?? ''}
-                onChange={(event) =>
-                  setFormData((currentData) => ({
-                    ...currentData,
-                    transportation: event.target.value
-                      ? (event.target.value as TransportationMode)
-                      : undefined,
-                  }))
-                }
-              >
-                <option value="">No preference</option>
-                {transportationOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <fieldset className="interests-fieldset">
-              <legend>Interests</legend>
-              <div className="chip-picker" aria-label="Select travel interests">
-                {interestOptions.map(({ label, value }) => {
-                  const selectedInterests = formData.interests ?? []
-                  const isSelected = selectedInterests.includes(value)
-
-                  return (
-                    <label className="chip-option" key={value}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => updateInterest(value)}
-                      />
-                      <span>{label}</span>
-                    </label>
-                  )
-                })}
-              </div>
-            </fieldset>
-          </div>
-
             <div className={`planner-form__actions${canViewSavedItinerary ? ' planner-form__actions--with-saved' : ''}`}>
-            <button
-              className="submit-button"
-              type="submit"
-              disabled={isSubmitting}
-              aria-busy={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="spinner" aria-hidden="true" />
-                  <span> ✨ Creating your personalized itinerary...</span>
-                </>
-              ) : (
-                <span>Generate My Itinerary</span>
-              )}
-            </button>
-
-            {canViewSavedItinerary && (
               <button
-                className="saved-itinerary-button"
-                type="button"
-                onClick={() => setCurrentStep('itinerary')}
+                className="submit-button"
+                type="submit"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
               >
-                View saved itinerary
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner" aria-hidden="true" />
+                    <span> ✨ Creating your personalized itinerary...</span>
+                  </>
+                ) : (
+                  <span>Generate My Itinerary</span>
+                )}
               </button>
-            )}
+
+              {canViewSavedItinerary && (
+                <button
+                  className="saved-itinerary-button"
+                  type="button"
+                  onClick={() => setCurrentStep('itinerary')}
+                >
+                  View saved itinerary
+                </button>
+              )}
             </div>
           </form>
         )}

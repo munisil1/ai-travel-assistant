@@ -10,5 +10,14 @@ module Types
     field :transportation, String, null: true
     field :interests, [String], null: false
     field :children, GraphQL::Types::JSON, null: false
+    field :itinerary, Types::ItineraryType, null: true
+
+    def itinerary
+      return unless object.itinerary
+
+      object.itinerary.deep_transform_keys do |key|
+        key.to_s.underscore
+      end
+    end
   end
 end

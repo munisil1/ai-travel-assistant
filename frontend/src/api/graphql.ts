@@ -110,3 +110,44 @@ export interface GenerateItineraryResponse {
     };
 }
 
+
+export const GET_TRIP_QUERY = `
+    query GetTrip($id: ID!) {
+        trip(id: $id) {
+            id
+            destination
+            departureDate
+            returnDate
+            adults
+            budget
+            travelPace
+            transportation
+            interests
+            children
+            itinerary {
+                summary
+                days {
+                    day
+                    date
+                    weather {
+                        temperature
+                        conditions
+                    }
+                    activities {
+                        timeOfDay
+                        title
+                        description
+                        duration
+                    }
+                }
+                packingList
+            }
+        }
+    }
+`;
+
+export interface GetTripResponse {
+    trip: CreateTripResponse["createTrip"]["trip"] & {
+        itinerary?: GenerateItineraryResponse["generateItinerary"]["itinerary"] | null;
+    } | null;
+}
