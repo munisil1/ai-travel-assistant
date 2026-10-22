@@ -10,9 +10,29 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_21_052136) do
+ActiveRecord::Schema[7.0].define(version: 2026_10_22_031247) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "itineraries", force: :cascade do |t|
+    t.bigint "trip_id", null: false
+    t.text "summary", null: false
+    t.jsonb "days", default: [], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["trip_id"], name: "index_itineraries_on_trip_id", unique: true
+  end
+
+  create_table "packing_items", force: :cascade do |t|
+    t.bigint "itinerary_id", null: false
+    t.string "label", null: false
+    t.integer "position", null: false
+    t.boolean "packed", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["itinerary_id", "position"], name: "index_packing_items_on_itinerary_id_and_position", unique: true
+    t.index ["itinerary_id"], name: "index_packing_items_on_itinerary_id"
+  end
 
   create_table "trips", force: :cascade do |t|
     t.string "destination"
@@ -26,6 +46,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_21_052136) do
     t.jsonb "children", default: []
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "itinerary"
   end
 
+  add_foreign_key "itineraries", "trips", on_delete: :cascade
+  add_foreign_key "packing_items", "itineraries", on_delete: :cascade
 end

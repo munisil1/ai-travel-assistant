@@ -118,6 +118,8 @@ class ItineraryGenerator
             end
         end
 
+        @trip.update!(itinerary: result)
+
         result.to_json
     end
 

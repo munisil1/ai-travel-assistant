@@ -10,8 +10,15 @@ module Mutations
       trip = Trip.find_by(id: trip_id)
       return { itinerary: nil } unless trip
 
-      result = ::ItineraryGenerator.new(trip).call
-      itinerary = JSON.parse(result).deep_transform_keys(&:underscore) if result.present?
+      itinerary =
+       if trip.itinerary.present?
+        trip.itinerary
+       else
+        result = ::ItineraryGenerator.new(trip).call
+        JSON.parse(result) if result.present?
+       end
+
+      itinerary = itinerary.deep_transform_keys(&:underscore) if itinerary.present?
 
       { itinerary: itinerary }
 
