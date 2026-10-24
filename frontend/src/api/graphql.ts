@@ -151,3 +151,31 @@ export interface GetTripResponse {
         itinerary?: GenerateItineraryResponse["generateItinerary"]["itinerary"] | null;
     } | null;
 }
+
+export const GET_TRIPS_QUERY = `
+    query GetTrips {
+        trips {
+            id
+            destination
+            departureDate
+            returnDate
+            adults
+            budget
+            travelPace
+            transportation
+            interests
+            children
+            itinerary {
+              summary
+            }
+        }
+    }
+`;
+
+export interface GetTripsResponse {
+    trips: (CreateTripResponse["createTrip"]["trip"] & {
+        itinerary?: {
+            summary: string;
+        } | null;
+    })[];
+}

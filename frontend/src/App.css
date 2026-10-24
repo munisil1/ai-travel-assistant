@@ -328,8 +328,7 @@ h1 {
 
 .age-option input:checked+span,
 .chip-option input:checked+span {
-    border-color: #2b7550;
-    background: #2b7550;
+    background: rgba(43, 160, 80, .8);
     color: #fff;
 }
 
@@ -404,6 +403,102 @@ h1 {
     margin: 0;
 }
 
+.load-saved-trips-button {
+    border: none;
+    background-color: inherit;
+    font-weight: 600;
+    margin-top: 15px;
+    color: #874a34;
+    min-height: 44px;
+
+    &:hover {
+        transform: translateY(-1px);
+        cursor: pointer;
+        color: #2b7550;
+        background: rgba(43, 117, 80, .08);
+    }
+}
+
+.saved-trips-view {
+    display: grid;
+    width: min(100%, 1060px);
+    gap: 26px;
+}
+
+.saved-trips-view__header {
+    display: grid;
+    justify-items: start;
+    gap: 22px;
+}
+
+.saved-trips-view__header h2 {
+    margin: 7px 0 0;
+    font-size: 2rem;
+    font-weight: 500;
+}
+
+.saved-trips-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+}
+
+.saved-trip-card {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(180px, .8fr) minmax(0, 1.6fr) auto;
+    align-items: center;
+    gap: 22px;
+    padding: 18px 22px;
+    border: 1px solid rgba(32, 73, 57, .16);
+    border-radius: 12px;
+    background: rgba(255, 255, 253, .88);
+}
+
+.saved-trip-card h3 {
+    margin: 0;
+    color: #163329;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.35rem;
+    font-weight: 500;
+}
+
+.saved-trip-card__dates {
+    margin: 7px 0 0;
+    color: #65776e;
+    font-size: .82rem;
+}
+
+.saved-trip-card__summary {
+    min-width: 0;
+    margin: 0;
+    color: #30443b;
+    font-size: .9rem;
+    line-height: 1.55;
+}
+
+.saved-trip-card .saved-itinerary-button:disabled {
+    border-color: #d6dfd9;
+    background: #edf2ee;
+    color: #65776e;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.saved-trips-view__message {
+    margin: 0;
+    padding: 22px;
+    border: 1px solid rgba(32, 73, 57, .13);
+    border-radius: 10px;
+    background: rgba(255, 255, 253, .83);
+    color: #52655e;
+}
+
+.saved-trips-view__message--error {
+    border-color: #d8a89c;
+    color: #873f31;
+}
+
 .saved-itinerary-button {
     display: flex;
     width: fit-content;
@@ -412,23 +507,17 @@ h1 {
     justify-content: center;
     margin: 0;
     padding: 0 18px;
-    border: 1px solid #a45f43;
-    border-radius: 10px;
-    background: #a45f43;
-    color: #fffaf4;
-    cursor: pointer;
-    font: inherit;
-    font-size: .84rem;
-    font-weight: 700;
-    box-shadow: 0 5px 12px rgba(120, 70, 48, .12);
-    transition: background 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+    border: none;
+    background: inherit;
+    font-weight: 600;
+    color: #873f31;
 }
 
 .saved-itinerary-button:hover {
     transform: translateY(-1px);
-    border-color: #874a34;
-    background: #874a34;
-    box-shadow: 0 8px 16px rgba(120, 70, 48, .18);
+    cursor: pointer;
+    color: #2b7550;
+    background: rgba(43, 117, 80, .08);
 }
 
 .saved-itinerary-button:focus-visible {
@@ -614,6 +703,18 @@ h1 {
     .generation-dialog__progress span {
         animation-duration: .01ms;
         animation-iteration-count: 1;
+    }
+}
+
+@media (max-width: 640px) {
+    .saved-trip-card {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+        gap: 12px;
+    }
+
+    .saved-trip-card .saved-itinerary-button {
+        width: 100%;
     }
 }
 

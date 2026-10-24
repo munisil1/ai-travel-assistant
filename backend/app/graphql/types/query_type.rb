@@ -22,18 +22,15 @@ module Types
       argument :id, ID, required: true
     end
 
+    field :trips, [Types::TripType], null: false
+
     def trip(id:)
       Trip.find_by(id: id)
     end
 
-    # Add root-level fields here.
-    # They will be entry points for queries on your schema.
-
-    # TODO: remove me
-    field :test_field, String, null: false,
-      description: "An example field added by the generator"
-    def test_field
-      "Hello World!"
+    def trips
+      Trip.order(created_at: :desc)
     end
+
   end
 end

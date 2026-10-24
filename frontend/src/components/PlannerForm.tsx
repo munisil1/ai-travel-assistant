@@ -4,6 +4,7 @@ import {
   type SelectedDestination,
 } from './DestinationAutocomplete'
 import { ItineraryDisplay } from './ItineraryDisplay'
+import { SavedTripsList } from './SavedTripsList'
 import {
   graphqlRequest,
   CREATE_TRIP_MUTATION,
@@ -12,6 +13,8 @@ import {
   type GenerateItineraryResponse,
   type GetTripResponse,
   GET_TRIP_QUERY,
+  type GetTripsResponse,
+  GET_TRIPS_QUERY,
 } from '../api/graphql'
 
 type ChildAgeRange = 'Infant' | 'Toddler' | 'Child' | 'Teen'
@@ -105,6 +108,22 @@ const initialFormData: PlannerFormData = {
   transportation: undefined,
 }
 
+type SavedTrip = NonNullable<GetTripResponse['trip']>
+
+const formDataFromTrip = (trip: SavedTrip): PlannerFormData => ({
+  destination: trip.destination,
+  selectedDestination: null,
+  departureDate: trip.departureDate,
+  returnDate: trip.returnDate,
+  adults: trip.adults,
+  travelingWithChildren: Boolean(trip.children?.length),
+  childAgeRanges: (trip.children ?? []) as ChildAgeRange[],
+  budget: trip.budget as BudgetLevel | undefined,
+  interests: trip.interests as InterestValue[],
+  travelPace: trip.travelPace as TravelPace | undefined,
+  transportation: trip.transportation as TransportationMode | undefined,
+})
+
 export function PlannerForm() {
   const loadingDialogRef = useRef<HTMLDivElement>(null)
   const [formData, setFormData] = useState<PlannerFormData>(initialFormData)
@@ -112,6 +131,12 @@ export function PlannerForm() {
   const [submissionError, setSubmissionError] = useState<string | null>(null)
   const [itinerary, setItinerary] = useState<GenerateItineraryResponse['generateItinerary']['itinerary'] | null>(null)
   const [currentStep, setCurrentStep] = useState<'details' | 'itinerary'>('details')
+  const [savedTrips, setSavedTrips] = useState<GetTripsResponse['trips']>([]);
+  const [showSavedTrips, setShowSavedTrips] = useState(false);
+  const [isLoadingSavedTrips, setIsLoadingSavedTrips] = useState(false)
+  const [loadingTripId, setLoadingTripId] = useState<string | null>(null)
+  const [savedTripsError, setSavedTripsError] = useState<string | null>(null)
+  const [returnToSavedTrips, setReturnToSavedTrips] = useState(false)
 
   const updateChildAgeRange = (ageRange: ChildAgeRange): void => {
     setFormData((currentData) => {
@@ -142,6 +167,55 @@ export function PlannerForm() {
 
       return { ...currentData, interests }
     })
+  }
+
+  const loadSavedTrips = async (): Promise<void> => {
+    setShowSavedTrips(true)
+    setReturnToSavedTrips(false)
+    setSavedTripsError(null)
+    setIsLoadingSavedTrips(true)
+
+    try {
+      const result = await graphqlRequest<GetTripsResponse>(GET_TRIPS_QUERY)
+      setSavedTrips(result.trips)
+    } catch (error) {
+      console.error('Error loading saved trips:', error)
+      setSavedTripsError('Could not load saved trips. Please try again.')
+    } finally {
+      setIsLoadingSavedTrips(false)
+    }
+  }
+
+  const viewSavedTrip = async (tripId: string): Promise<void> => {
+    setLoadingTripId(tripId)
+    setSavedTripsError(null)
+
+    try {
+      const result = await graphqlRequest<GetTripResponse>(GET_TRIP_QUERY, { id: tripId })
+      const trip = result.trip
+
+      if (!trip) {
+        setSavedTripsError('This trip could not be found.')
+        return
+      }
+
+      if (!trip.itinerary) {
+        setSavedTripsError('This trip does not have a saved itinerary yet.')
+        return
+      }
+
+      setFormData(formDataFromTrip(trip))
+      setItinerary(trip.itinerary)
+      localStorage.setItem('currentTripId', trip.id)
+      setReturnToSavedTrips(true)
+      setShowSavedTrips(false)
+      setCurrentStep('itinerary')
+    } catch (error) {
+      console.error('Error loading saved itinerary:', error)
+      setSavedTripsError('Could not load this itinerary. Please try again.')
+    } finally {
+      setLoadingTripId(null)
+    }
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
@@ -216,19 +290,7 @@ export function PlannerForm() {
           return
         }
 
-        setFormData({
-          destination: result.trip.destination,
-          selectedDestination: null,
-          departureDate: result.trip.departureDate,
-          returnDate: result.trip.returnDate,
-          adults: result.trip.adults,
-          travelingWithChildren: Boolean(result.trip.children?.length),
-          childAgeRanges: (result.trip.children ?? []) as ChildAgeRange[],
-          budget: result.trip.budget as BudgetLevel | undefined,
-          interests: result.trip.interests as InterestValue[],
-          travelPace: result.trip.travelPace as TravelPace | undefined,
-          transportation: result.trip.transportation as TransportationMode | undefined,
-        })
+        setFormData(formDataFromTrip(result.trip))
 
         if (result.trip.itinerary) {
           setItinerary(result.trip.itinerary)
@@ -262,9 +324,15 @@ export function PlannerForm() {
             <button
               type="button"
               className="back-button"
-              onClick={() => setCurrentStep('details')}
+              onClick={() => {
+                setCurrentStep('details')
+                if (returnToSavedTrips) {
+                  setShowSavedTrips(true)
+                  setReturnToSavedTrips(false)
+                }
+              }}
             >
-              ← Back to trip details
+              {returnToSavedTrips ? '← Back to saved trips' : '← Back to trip details'}
             </button>
 
             <ItineraryDisplay
@@ -279,6 +347,18 @@ export function PlannerForm() {
               }}
             />
           </section>
+        ) : showSavedTrips ? (
+          <SavedTripsList
+            trips={savedTrips}
+            isLoading={isLoadingSavedTrips}
+            loadingTripId={loadingTripId}
+            error={savedTripsError}
+            onBack={() => {
+              setShowSavedTrips(false)
+              setSavedTripsError(null)
+            }}
+            onViewItinerary={(tripId: string) => void viewSavedTrip(tripId)}
+          />
         ) : (
           <form className="planner-form" onSubmit={handleSubmit}>
             <div className="form-heading">
@@ -286,7 +366,16 @@ export function PlannerForm() {
                 <p className="form-heading__overline">Start planning</p>
                 <h2>Where will you go?</h2>
               </div>
-              <span className="form-heading__step">01 / 02</span>
+              {/* <span className="form-heading__step">01 / 02</span> */}
+              <span>
+                <button
+                  className="load-saved-trips-button"
+                  type="button"
+                  onClick={loadSavedTrips}
+                >
+                  Saved Trips ➚
+                </button>
+              </span>
             </div>
 
             <div className="form-grid">
@@ -533,7 +622,7 @@ export function PlannerForm() {
                   type="button"
                   onClick={() => setCurrentStep('itinerary')}
                 >
-                  View saved itinerary
+                  View Saved Itinerary
                 </button>
               )}
             </div>
