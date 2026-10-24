@@ -80,7 +80,7 @@ export function DestinationAutocomplete({
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const requestIdRef = useRef(0)
-  const skipNextSearchRef = useRef(false)
+  const shouldSearchRef = useRef(false)
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent): void => {
@@ -100,11 +100,10 @@ export function DestinationAutocomplete({
     const query = value.trim()
     const requestId = ++requestIdRef.current
 
-    // A selected result updates the controlled input value, but that value is already validated.
-    if (skipNextSearchRef.current) {
-      skipNextSearchRef.current = false
+    if (!shouldSearchRef.current) {
       return
     }
+    shouldSearchRef.current = false
 
     if (query.length < MINIMUM_QUERY_LENGTH) {
       return
@@ -137,9 +136,6 @@ export function DestinationAutocomplete({
           `https://api.geoapify.com/v1/geocode/autocomplete?${searchParams.toString()}`,
           { signal: abortController.signal },
         )
-
-        console.log("gotten here before response ", response);
-
         if (!response.ok) {
           throw new Error('Destination search failed.')
         }
@@ -174,6 +170,7 @@ export function DestinationAutocomplete({
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
     // Any edit invalidates the previous selection until the user chooses a new result.
     const nextValue = event.target.value
+    shouldSearchRef.current = true
     onChange(nextValue)
     setSuggestions([])
     setIsLoading(false)
@@ -182,7 +179,6 @@ export function DestinationAutocomplete({
   }
 
   const handleSuggestionSelect = (suggestion: GeoapifyResult): void => {
-    skipNextSearchRef.current = true
     onChange(suggestion.formatted)
     onSelect(suggestion)
     setSuggestions([])
@@ -209,7 +205,7 @@ export function DestinationAutocomplete({
         aria-controls="destination-suggestions"
         onChange={handleInputChange}
         onFocus={() => {
-          if (value.trim().length >= MINIMUM_QUERY_LENGTH) {
+          if (suggestions.length > 0 || isLoading || errorMessage) {
             setIsOpen(true)
           }
         }}
