@@ -2,7 +2,7 @@ const GRAPHQL_URL = "http://localhost:3000/graphql";
 
 export async function graphqlRequest<T>(
     query: string,
-    variables?: Record<string, any>
+    variables?: Record<string, unknown>
 ): Promise<T> {
     const response = await fetch(GRAPHQL_URL, {
         method: "POST",
@@ -87,6 +87,20 @@ export const GENERATE_ITINERARY_MUTATION = `
   }
 `;
 
+export const UPDATE_PACKING_STATUS_MUTATION = `
+    mutation UpdatePackingStatus($input: UpdatePackingStatusInput!) {
+        updatePackingStatus(input: $input) {
+            packingStatus
+        }
+    }
+`;
+
+export interface UpdatePackingStatusResponse {
+    updatePackingStatus: {
+        packingStatus: Record<string, boolean>;
+    };
+}
+
 export interface GenerateItineraryResponse {
     generateItinerary: {
         itinerary: {
@@ -124,6 +138,7 @@ export const GET_TRIP_QUERY = `
             transportation
             interests
             children
+            packingStatus
             itinerary {
                 summary
                 days {
@@ -148,6 +163,7 @@ export const GET_TRIP_QUERY = `
 
 export interface GetTripResponse {
     trip: CreateTripResponse["createTrip"]["trip"] & {
+        packingStatus: Record<string, boolean>;
         itinerary?: GenerateItineraryResponse["generateItinerary"]["itinerary"] | null;
     } | null;
 }

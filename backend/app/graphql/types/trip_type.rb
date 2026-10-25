@@ -10,6 +10,7 @@ module Types
     field :transportation, String, null: true
     field :interests, [String], null: false
     field :children, GraphQL::Types::JSON, null: false
+    field :packing_status, GraphQL::Types::JSON, null: false
     field :itinerary, Types::ItineraryType, null: true
 
     def itinerary

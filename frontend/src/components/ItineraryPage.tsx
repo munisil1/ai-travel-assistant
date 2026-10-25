@@ -68,6 +68,8 @@ export function ItineraryPage() {
       ) : trip?.itinerary ? (
         <ItineraryDisplay
           itinerary={trip.itinerary}
+          tripId={trip.id}
+          packingStatus={trip.packingStatus}
           tripMeta={{
             destination: trip.destination,
             departureDate: trip.departureDate,

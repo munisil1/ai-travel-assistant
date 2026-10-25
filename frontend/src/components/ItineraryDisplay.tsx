@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { GenerateItineraryResponse } from '../api/graphql'
+import { graphqlRequest, UPDATE_PACKING_STATUS_MUTATION, type GenerateItineraryResponse, type UpdatePackingStatusResponse } from '../api/graphql'
 import { getWeatherIcon } from '../utils/weatherIcons'
 
 type ItineraryTripMeta = {
@@ -13,6 +13,8 @@ type ItineraryTripMeta = {
 
 type ItineraryDisplayProps = {
   itinerary: GenerateItineraryResponse['generateItinerary']['itinerary'] | null
+  tripId: string
+  packingStatus: Record<string, boolean>
   tripMeta?: ItineraryTripMeta | null
 }
 
@@ -34,8 +36,10 @@ const formatTripDate = (value: string) => {
     : new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
 }
 
-export function ItineraryDisplay({ itinerary, tripMeta }: ItineraryDisplayProps) {
-  const [packedItems, setPackedItems] = useState<Record<string, boolean>>({})
+export function ItineraryDisplay({ itinerary, tripId, packingStatus, tripMeta }: ItineraryDisplayProps) {
+  const [savedPackingState, setSavedPackingState] = useState({ tripId, items: packingStatus })
+  const [packingError, setPackingError] = useState<string | null>(null)
+  const packedItems = savedPackingState.tripId === tripId ? savedPackingState.items : packingStatus
 
   if (!itinerary) {
     return (
@@ -57,9 +61,28 @@ export function ItineraryDisplay({ itinerary, tripMeta }: ItineraryDisplayProps)
     ? Math.round(forecastDays.reduce((total, day) => total + (day.weather?.temperature ?? 0), 0) / forecastDays.length)
     : null
   const packedCount = itinerary.packingList.reduce(
-    (count, item, index) => count + (packedItems[`${index}-${item}`] ? 1 : 0),
+    (count, item) => count + (packedItems[item] ? 1 : 0),
     0,
   )
+
+  const updatePackedStatus = async (item: string, packed: boolean): Promise<void> => {
+    const previousStatus = Boolean(packedItems[item])
+    setSavedPackingState({ tripId, items: { ...packedItems, [item]: packed } })
+    setPackingError(null)
+
+    try {
+      await graphqlRequest<UpdatePackingStatusResponse>(UPDATE_PACKING_STATUS_MUTATION, {
+        input: { tripId, item, packed },
+      })
+    } catch (error) {
+      setSavedPackingState((current) => ({
+        tripId,
+        items: { ...(current.tripId === tripId ? current.items : packedItems), [item]: previousStatus },
+      }))
+      setPackingError('Could not save packing progress. Please try again.')
+      console.error('Error saving packing status:', error)
+    }
+  }
 
   return (
     <section className="itinerary-display" aria-live="polite">
@@ -158,17 +181,15 @@ export function ItineraryDisplay({ itinerary, tripMeta }: ItineraryDisplayProps)
             max={itinerary.packingList.length}
             aria-label="Packing progress"
           />
+          {packingError && <p role="alert">{packingError}</p>}
           <ul className="itinerary-packing-list__items">
             {itinerary.packingList.map((item, index) => (
-              <li className={packedItems[`${index}-${item}`] ? 'is-packed' : ''} key={`${item}-${index}`}>
+              <li className={packedItems[item] ? 'is-packed' : ''} key={`${item}-${index}`}>
                 <input
                   type="checkbox"
                   id={`packing-${index}`}
-                  checked={Boolean(packedItems[`${index}-${item}`])}
-                  onChange={(event) => setPackedItems((current) => ({
-                    ...current,
-                    [`${index}-${item}`]: event.target.checked,
-                  }))}
+                  checked={Boolean(packedItems[item])}
+                  onChange={(event) => void updatePackedStatus(item, event.target.checked)}
                 />
                 <label htmlFor={`packing-${index}`}>{item}</label>
               </li>
