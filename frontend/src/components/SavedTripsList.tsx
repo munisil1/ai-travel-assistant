@@ -7,6 +7,7 @@ type SavedTripsListProps = {
   error: string | null
   onBack: () => void
   onViewItinerary: (tripId: string) => void
+  onRetry: () => void
 }
 
 const formatTripDate = (value: string): string => {
@@ -23,6 +24,7 @@ export function SavedTripsList({
   error,
   onBack,
   onViewItinerary,
+  onRetry,
 }: SavedTripsListProps) {
   return (
     <section className="saved-trips-view" aria-labelledby="saved-trips-title">
@@ -37,9 +39,14 @@ export function SavedTripsList({
       </header>
 
       {error && (
-        <p className="saved-trips-view__message saved-trips-view__message--error" role="alert">
-          {error}
-        </p>
+        <div className="saved-trips-view__error-group">
+          <p className="saved-trips-view__message saved-trips-view__message--error" role="alert">
+            {error}
+          </p>
+          <button type="button" className="saved-itinerary-button" onClick={onRetry}>
+            Retry
+          </button>
+        </div>
       )}
 
       {isLoading ? (
