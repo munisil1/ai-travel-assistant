@@ -39,3 +39,12 @@ backend/.byebug_history
 !.vscode/extensions.json
 *.swp
 *.swo
+.neon
+
+
+# Local Neon / Codex integration
+/.agents/
+/neon.ts
+/package.json
+/package-lock.json
+/skills-lock.json
