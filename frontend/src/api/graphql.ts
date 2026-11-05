@@ -1,4 +1,6 @@
-const GRAPHQL_URL = "http://localhost:3000/graphql";
+// const GRAPHQL_URL = "http://localhost:3000/graphql";
+const GRAPHQL_URL =
+  import.meta.env.VITE_GRAPHQL_URL || "http://localhost:3000/graphql";
 
 export async function graphqlRequest<T>(
     query: string,
